@@ -35,7 +35,6 @@ const INITIAL_NICU_UNITS = [
       incTemp: parseFloat((32.1 + (i % 3) * 0.1).toFixed(1)),
       babyTemp: parseFloat((36.8 + (i % 2) * 0.05).toFixed(2)),
       movement: "Still",
-      anomalyScore: 0.02,
       status: "NORMAL"
     }))
   },
@@ -60,7 +59,6 @@ const INITIAL_NICU_UNITS = [
         incTemp: parseFloat((32.0 - (i * 0.02)).toFixed(1)),
         babyTemp: parseFloat(Math.max(35.9, t).toFixed(2)),
         movement: i % 2 === 0 ? "Active" : "Still",
-        anomalyScore: stat === "CRITICAL" ? 0.94 : 0.45,
         status: stat
       };
     })
@@ -82,7 +80,6 @@ const INITIAL_NICU_UNITS = [
       incTemp: 32.3,
       babyTemp: 36.9,
       movement: i % 3 === 0 ? "Abnormal" : "Active",
-      anomalyScore: 0.78,
       status: "WARNING"
     }))
   },
@@ -106,7 +103,6 @@ const INITIAL_NICU_UNITS = [
         incTemp: 32.5,
         babyTemp: parseFloat(Math.min(38.2, t).toFixed(2)),
         movement: "Still",
-        anomalyScore: stat === "CRITICAL" ? 0.98 : 0.1,
         status: stat
       };
     })
@@ -128,7 +124,6 @@ const INITIAL_NICU_UNITS = [
       incTemp: 0.0,
       babyTemp: 0.0,
       movement: "Offline",
-      anomalyScore: 1.0,
       status: "OFFLINE"
     }))
   },
@@ -149,7 +144,6 @@ const INITIAL_NICU_UNITS = [
       incTemp: 32.2,
       babyTemp: 36.8,
       movement: "Still",
-      anomalyScore: 0.03,
       status: "NORMAL"
     }))
   },
@@ -170,7 +164,6 @@ const INITIAL_NICU_UNITS = [
       incTemp: 32.3,
       babyTemp: 36.9,
       movement: "Still",
-      anomalyScore: 0.01,
       status: "NORMAL"
     }))
   },
@@ -191,7 +184,6 @@ const INITIAL_NICU_UNITS = [
       incTemp: 32.4,
       babyTemp: 37.0,
       movement: "Still",
-      anomalyScore: 0.04,
       status: "NORMAL"
     }))
   },
@@ -212,7 +204,6 @@ const INITIAL_NICU_UNITS = [
       incTemp: 32.1,
       babyTemp: 36.7,
       movement: "Still",
-      anomalyScore: 0.02,
       status: "NORMAL"
     }))
   },
@@ -233,7 +224,6 @@ const INITIAL_NICU_UNITS = [
       incTemp: 32.2,
       babyTemp: 36.8,
       movement: "Still",
-      anomalyScore: 0.01,
       status: "NORMAL"
     }))
   }
@@ -360,15 +350,6 @@ const enableAlarmSound = async () => {
             incTemp: reading.incubatorTemp,
             babyTemp: reading.babyTemp,
             movement: reading.movement,
-            // Keep the trained model output separate from rule-based alarms.
-            mlPrediction: reading.mlPrediction,
-            mlAlarmProbability: reading.mlAlarmProbability,
-            anomalyScore:
-              reading.overallAlarm ||
-              reading.temperatureAlarm ||
-              reading.movementAlarm
-                ? 0.9
-                : 0.02,
             status: isOffline ? "OFFLINE" : reading.status
           };
 
@@ -444,7 +425,6 @@ const enableAlarmSound = async () => {
             incTemp: 32.2,
             babyTemp: 36.8,
             movement: 'Still',
-            anomalyScore: 0.02,
             status: 'NORMAL'
           })),
           incubatorTemp: 32.2,
@@ -616,7 +596,7 @@ const enableAlarmSound = async () => {
             style={{ backgroundColor: activeTab === 'analytics' ? '#0B2545' : '#FFFFFF', borderColor: '#E2E8F0' }}
           >
             <Database className="w-4 h-4 text-emerald-400" />
-            <span>AI Anomaly & Telemetry Dataset Insights</span>
+            <span>Telemetry & Dataset Insights</span>
           </button>
         </div>
 
@@ -824,34 +804,9 @@ const enableAlarmSound = async () => {
                             </div>
 
                             <div className="p-3 rounded-xl border bg-slate-50" style={{ borderColor: '#D9E4EF' }}>
-                              <p className="text-[10px] font-bold uppercase text-slate-500">Movement AI</p>
+                              <p className="text-[10px] font-bold uppercase text-slate-500">Movement</p>
                               <p className="text-xs font-black text-[#0B2545] mt-1">{latest.movement}</p>
                             </div>
-                          </div>
-
-                          {/* Trained ML model output from the backend */}
-                          <div className="mb-4 p-3 rounded-xl border bg-purple-50 border-purple-200">
-                            <p className="text-xs font-bold uppercase text-purple-800">
-                              ML Model Prediction
-                            </p>
-                            <p className="text-sm font-black text-purple-900 mt-1">
-                              {latest.mlPrediction === undefined || latest.mlPrediction === null
-                                ? "Waiting for model output"
-                                : Number(latest.mlPrediction) === 1
-                                  ? "Anomaly predicted"
-                                  : "No anomaly predicted"}
-                            </p>
-                            <p className="text-xs text-purple-700 mt-1">
-                              Anomaly probability:{" "}
-                              {latest.mlAlarmProbability !== undefined &&
-                              latest.mlAlarmProbability !== null &&
-                              Number.isFinite(Number(latest.mlAlarmProbability))
-                                ? `${(Number(latest.mlAlarmProbability) * 100).toFixed(1)}%`
-                                : "Not available"}
-                            </p>
-                            <p className="text-[10px] text-purple-600 mt-1">
-                              Experimental model output based on synthetic data — not a clinically validated alert.
-                            </p>
                           </div>
 
                           {/* Mini Charts */}
@@ -958,12 +913,12 @@ const enableAlarmSound = async () => {
           </div>
         )}
 
-        {/* Tab 3: AI Anomaly & Telemetry Dataset Insights */}
+        {/* Tab 3: Telemetry & Dataset Insights */}
         {activeTab === 'analytics' && (
           <div className="space-y-6">
             <div className="bg-white rounded-2xl border p-6 shadow-xs" style={{ borderColor: '#D9E4EF' }}>
-              <h3 className="text-lg font-black text-[#0B2545] mb-2">Phase 1 AI/ML Anomaly Detector & Dataset Architecture</h3>
-              <p className="text-xs text-slate-600 leading-relaxed">This dashboard combines rule-based temperature and movement alerts with an experimental trained ML model whose prediction and anomaly probability are displayed on connected incubator cards. The model was trained on synthetic data, so its output is for demonstration only and is not a clinically validated prediction.</p>
+              <h3 className="text-lg font-black text-[#0B2545] mb-2">Telemetry Monitoring & Dataset Overview</h3>
+              <p className="text-xs text-slate-600 leading-relaxed">This dashboard displays simulated incubator telemetry, temperature and movement alerts, and sensor connection status. Alerts are generated by the configured demo rules.</p>
 
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-6">
@@ -1204,5 +1159,3 @@ const enableAlarmSound = async () => {
     </div>
   );
 }
-
-
